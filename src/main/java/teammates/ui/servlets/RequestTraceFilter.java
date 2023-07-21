@@ -1,7 +1,5 @@
-package teammates.ui.servlets;
-
 import java.io.IOException;
-import java.util.Random;
+import java.security.SecureRandom;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -26,6 +24,7 @@ import teammates.ui.webapi.JsonResult;
 public class RequestTraceFilter implements Filter {
 
     private static final Logger log = Logger.getLogger();
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     @Override
     public void init(FilterConfig filterConfig) {
@@ -33,7 +32,8 @@ public class RequestTraceFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
+    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
+            throws IOException, ServletException {
         HttpServletResponse response = (HttpServletResponse) resp;
 
         response.setHeader("Strict-Transport-Security", "max-age=31536000");
@@ -46,9 +46,9 @@ public class RequestTraceFilter implements Filter {
         String traceId;
         String spanId = null;
         if (requestId == null) {
-            // Generate random hexadecimal string of length 32
+            // Generate random hexadecimal string of length 32 using SecureRandom
             byte[] resBuf = new byte[16];
-            new Random().nextBytes(resBuf);
+            secureRandom.nextBytes(resBuf);
             traceId = Hex.encodeHexString(resBuf);
         } else {
             // X-Cloud-Trace-Context header is in form of TRACE_ID/SPAN_ID;o=TRACE_TRUE
@@ -58,6 +58,9 @@ public class RequestTraceFilter implements Filter {
                 spanId = traceAndSpan[1].split(";")[0];
             }
         }
+
+        // Resto do código permanece inalterado...
+
 
         // The header X-AppEngine-QueueName cannot be spoofed as GAE will strip any user-sent X-AppEngine-QueueName headers.
         // Reference: https://cloud.google.com/appengine/docs/standard/java/taskqueue/push/creating-handlers#reading_request_headers
